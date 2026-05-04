@@ -33,22 +33,23 @@ class CasualTrader(Agent):
 #buys when prices look reasonable relative to the recent average
 #sometimes sells duplicates when over-stocked
 class Collector(Agent):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, fair_value=10.0, **kwargs):
         target_inventory = kwargs.pop('target_inventory', None)
         super().__init__(*args, **kwargs)
         #heterogeneity: each collector wants a different set size (8-15) and has a different willingness to overpay (2%-10% above recent mean)
+        self.fair_value = fair_value * random.uniform(0.9, 1.1) #each collector has a slightly different perception of the fair value (±10%)
         self.target_inventory = target_inventory or random.randint(8, 15)
-        self.price_tolerance = random.uniform(1.02, 1.10)
-
+        self.buy_tolerance = random.uniform(1.02, 1.1) #buy up to 0%-10% above fair value
+        self.sell_tolerance = random.uniform(1.2, 1.5) #sell when 20%-50% above fair value
+    
     def decide(self, market_price, price_history):
         #buy if items are still needed, are affordable, and price is within personal tolerance band above the recent average
         if self.inventory < self.target_inventory and self.balance > market_price:
-            recent_mean = self._mean_price(price_history)
-            if market_price < recent_mean * self.price_tolerance:
+            if market_price < self.fair_value * self.buy_tolerance:
                 return 'buy'
             
         #small chance of selling duplicates if over-stocked
-        if self.inventory > self.target_inventory and random.random() < 0.05:
+        if self.inventory > 0 and market_price > self.fair_value * self.sell_tolerance:
             return 'sell'
         return 'hold'
 

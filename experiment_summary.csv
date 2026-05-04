@@ -1,4 +1,4 @@
 Experiment,Mean Price,Mean CI,Volatility,Volatility CI,Peak Price,Peak CI
-Baseline (Mixed),91.721,10.250,84.828,12.331,316.948,44.049
-Speculator-Dominated,261.034,31.358,293.935,31.074,958.855,95.447
-Collector-Dominated,58.433,2.444,43.424,2.723,169.667,10.470
+Baseline (Mixed),21.556,6.025,10.573,6.163,48.207,22.315
+Speculator-Dominated,234.728,41.431,264.929,44.089,862.481,139.938
+Collector-Dominated,12.052,0.169,0.682,0.077,13.595,0.306
