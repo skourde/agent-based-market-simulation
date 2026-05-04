@@ -66,7 +66,7 @@ class Speculator(Agent):
         super().__init__(*args, **kwargs)
         #heterogeneity: each speculator uses a different lookback window (3-10) and has a different threshold before reacting to a trend (0%-2%)
         self.lookback = random.randint(3, 10)
-        self.threshold = random.uniform(0.0, 0.02)
+        self.threshold = random.uniform(0.01, 0.05) #make speculators react less aggressively (was 0-0.02)
 
     def decide(self, market_price, price_history):
         #need at least lookback+1 prices to compute a trend

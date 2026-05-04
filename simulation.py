@@ -21,7 +21,7 @@ class Simulation:
         self.market = Market(
             initial_price=config.get('initial_price', 10.0),
             n_agents=n_agents,
-            demand_sensitivity=config.get('demand_sensitivity', 0.5),
+            demand_sensitivity=config.get('demand_sensitivity', 0.05), #previously 0.5, more realistic for a high-frequenct simulation
             noise_std=config.get('noise_std', 0.01),
             transaction_fee=config.get('transaction_fee', 0.0),
         )
