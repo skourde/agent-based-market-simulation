@@ -13,9 +13,9 @@ from simulation import Simulation
 #three population-mix experiments
 #all other market parameters are at defaults
 experiments = {
-    "Baseline (Mixed)":     {'casual': 10, 'collectors': 5,  'speculators': 5,  'steps': 300},
-    "Speculator-Dominated": {'casual': 5,  'collectors': 2,  'speculators': 15, 'steps': 300},
-    "Collector-Dominated":  {'casual': 5,  'collectors': 15, 'speculators': 2,  'steps': 300},
+    "Baseline (Mixed)":     {'casual': 8, 'collectors': 8,  'speculators': 4,  'steps': 200},
+    "Speculator-Dominated": {'casual': 5,  'collectors': 2,  'speculators': 15, 'steps': 200},
+    "Collector-Dominated":  {'casual': 5,  'collectors': 15, 'speculators': 2,  'steps': 200},
 }
 
 N_SEEDS = 30 #number of runs per experiment
