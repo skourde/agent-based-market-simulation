@@ -13,51 +13,47 @@ class Agent:
         self.balance = balance #Steam wallet balance
         self.inventory = inventory #number of items currently held
 
-    def decide(self, market_price, price_history):
+    def decide(self, market_price, price_history, transaction_fee=0.0):
         raise NotImplementedError
 
 #CasualTrader: barely engages with the market
 #acts randomly when active, otherwise holds
-#represents the "noise trader" archetype
+# represents the "noise trader" archetype
 class CasualTrader(Agent):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.activity_rate = random.uniform(0.05, 0.15) #each casual has a slightly different activity rate (5%-15%)
 
-    def decide(self, market_price, price_history):
+    def decide(self, market_price, price_history, transaction_fee=0.0):
         if random.random() < self.activity_rate:
             return random.choice(['buy', 'sell', 'hold'])
         return 'hold'
 
 #Collector: patient buyer trying to complete a set
-#buys when prices look reasonable relative to the recent average
-#sometimes sells duplicates when over-stocked
+#buys when prices look reasonable relative to fair value
+#only sells when the effective return after the platform fee justifies it
+#acts as a price anchor — suppresses runaway price growth
 class Collector(Agent):
     def __init__(self, *args, fair_value=10.0, **kwargs):
         target_inventory = kwargs.pop('target_inventory', None)
         super().__init__(*args, **kwargs)
-        #heterogeneity: each collector wants a different set size (8-15) and has a different willingness to overpay (2%-10% above recent mean)
+        #heterogeneity: each collector wants a different set size (8-15) and has a different willingness to overpay (2%-10% above fair value)
         self.fair_value = fair_value * random.uniform(0.9, 1.1) #each collector has a slightly different perception of the fair value (±10%)
         self.target_inventory = target_inventory or random.randint(8, 15)
-        self.buy_tolerance = random.uniform(1.02, 1.1) #buy up to 0%-10% above fair value
+        self.buy_tolerance = random.uniform(1.02, 1.1) #buy up to 2%-10% above fair value
         self.sell_tolerance = random.uniform(1.2, 1.5) #sell when 20%-50% above fair value
-    
-    def decide(self, market_price, price_history):
-        #buy if items are still needed, are affordable, and price is within personal tolerance band above the recent average
+
+    def decide(self, market_price, price_history, transaction_fee=0.0):
+        #buy if items are still needed, are affordable, and price is within personal tolerance band above fair value
         if self.inventory < self.target_inventory and self.balance > market_price:
             if market_price < self.fair_value * self.buy_tolerance:
                 return 'buy'
-            
-        #small chance of selling duplicates if over-stocked
-        if self.inventory > 0 and market_price > self.fair_value * self.sell_tolerance:
+        #only sell if what we receive after the platform fee is still above our sell threshold
+        #higher fees suppress selling because the effective return no longer justifies it
+        effective_return = market_price * (1 - transaction_fee)
+        if self.inventory > 0 and effective_return > self.fair_value * self.sell_tolerance:
             return 'sell'
         return 'hold'
-
-    def _mean_price(self, price_history):
-        if not price_history:
-            return 1
-        window = price_history[-20:]
-        return sum(window) / len(window)
 
 #Speculator: trend-follower
 #buys when prices are rising, sells when falling
@@ -65,21 +61,20 @@ class Collector(Agent):
 class Speculator(Agent):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        #heterogeneity: each speculator uses a different lookback window (3-10) and has a different threshold before reacting to a trend (0%-2%)
+        #heterogeneity: each speculator uses a different lookback window (3-10) and has a different threshold before reacting to a trend (1%-5%)
         self.lookback = random.randint(3, 10)
-        self.threshold = random.uniform(0.01, 0.05) #make speculators react less aggressively (was 0-0.02)
+        self.threshold = random.uniform(0.01, 0.05)  # make speculators react less aggressively (was 0-0.02)
 
-    def decide(self, market_price, price_history):
+    def decide(self, market_price, price_history, transaction_fee=0.0):
         #need at least lookback+1 prices to compute a trend
         if len(price_history) < self.lookback + 1:
             return 'hold'
-
         #convert absolute trend to a relative (percentage) trend so behaviour is consistent regardless of price level
         recent_trend = price_history[-1] - price_history[-self.lookback]
         relative_trend = recent_trend / price_history[-self.lookback]
-
         if relative_trend > self.threshold and self.balance > market_price:
             return 'buy'
-        elif relative_trend < -self.threshold and self.inventory > 0:
+        #sell on a downtrend — simple and preserves the bubble-and-crash mechanic
+        if relative_trend < -self.threshold and self.inventory > 0:
             return 'sell'
         return 'hold'

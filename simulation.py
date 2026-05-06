@@ -46,7 +46,11 @@ class Simulation:
         for step in range(self.steps):
             orders = []
             for agent in self.agents:
-                action = agent.decide(self.market.price, self.market.price_history)
+                action = agent.decide(
+                    self.market.price,
+                    self.market.price_history,
+                    self.market.transaction_fee #pass fee so agents can respond to it
+                )
                 if action in ('buy', 'sell'):
                     orders.append((action, agent))
             self.market.execute(orders)
